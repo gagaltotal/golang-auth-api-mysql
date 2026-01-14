@@ -1,0 +1,733 @@
+openapi: 3.0.3
+info:
+  title: Golang Auth API
+  description: Complete REST API with JWT authentication, role-based access control, audit logging, and product management
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Users
+    description: User management endpoints
+  - name: Products
+    description: Product management endpoints
+  - name: Audit
+    description: Audit log endpoints
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          example: john@example.com
+        role:
+          type: string
+          enum: [admin, user]
+          example: user
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Product Name
+        description:
+          type: string
+          example: Product description
+        price:
+          type: number
+          format: float
+          example: 10000
+        stock:
+          type: integer
+          example: 100
+        image_url:
+          type: string
+          example: /uploads/abc123.jpg
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        action:
+          type: string
+        resource:
+          type: string
+        method:
+          type: string
+        path:
+          type: string
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        payload:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Error message
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register new user
+      description: Create a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: password123
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                      refresh_token:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login user
+      description: Authenticate user and get tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                      refresh_token:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Refresh access token
+      description: Get new access token using refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  example: refresh-token-here
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                      refresh_token:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout user
+      description: Revoke refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  example: refresh-token-here
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: logged out successfully
+
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      description: Get authenticated user's profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+    put:
+      tags:
+        - Users
+      summary: Update current user profile
+      description: Update authenticated user's profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  example: John Updated
+                email:
+                  type: string
+                  format: email
+                  example: john.new@example.com
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+
+  /users/me/password:
+    put:
+      tags:
+        - Users
+      summary: Change password
+      description: Change authenticated user's password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - old_password
+                - new_password
+              properties:
+                old_password:
+                  type: string
+                  example: oldpassword123
+                new_password:
+                  type: string
+                  minLength: 6
+                  example: newpassword123
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: password changed successfully
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Get all users (Admin only)
+      description: Get paginated list of all users
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  total_items:
+                    type: integer
+        '403':
+          description: Forbidden - Admin only
+
+  /users/{id}:
+    delete:
+      tags:
+        - Users
+      summary: Delete user (Admin only)
+      description: Delete user by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User deleted successfully
+        '403':
+          description: Forbidden - Admin only
+        '404':
+          description: User not found
+
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Get all products (Public)
+      description: Get paginated and filtered list of products
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: min_price
+          schema:
+            type: number
+        - in: query
+          name: max_price
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Product'
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total_items:
+                        type: integer
+                      total_pages:
+                        type: integer
+
+    post:
+      tags:
+        - Products
+      summary: Create product (Admin only)
+      description: Create a new product
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - price
+                - stock
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  example: New Product
+                description:
+                  type: string
+                  example: Product description
+                price:
+                  type: number
+                  minimum: 0
+                  example: 15000
+                stock:
+                  type: integer
+                  minimum: 0
+                  example: 50
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '403':
+          description: Forbidden - Admin only
+
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get product by ID (Public)
+      description: Get single product details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+
+    put:
+      tags:
+        - Products
+      summary: Update product (Admin only)
+      description: Update existing product
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                description:
+                  type: string
+                price:
+                  type: number
+                  minimum: 0
+                stock:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '403':
+          description: Forbidden - Admin only
+        '404':
+          description: Product not found
+
+    delete:
+      tags:
+        - Products
+      summary: Delete product (Admin only)
+      description: Delete product by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product deleted successfully
+        '403':
+          description: Forbidden - Admin only
+        '404':
+          description: Product not found
+
+  /products/{id}/image:
+    post:
+      tags:
+        - Products
+      summary: Upload product image (Admin only)
+      description: Upload image for product
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '403':
+          description: Forbidden - Admin only
+        '404':
+          description: Product not found
+
+  /audit-logs:
+    get:
+      tags:
+        - Audit
+      summary: Get audit logs (Admin only)
+      description: Get paginated and filtered audit logs
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: user_id
+          schema:
+            type: integer
+        - in: query
+          name: action
+          schema:
+            type: string
+        - in: query
+          name: resource
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audit logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AuditLog'
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total_items:
+                        type: integer
+                      total_pages:
+                        type: integer
+        '403':
+          description: Forbidden - Admin only

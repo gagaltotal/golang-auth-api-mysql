@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: auth_api_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - auth_api_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: auth_api
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      SERVER_PORT: ${SERVER_PORT}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      REFRESH_EXPIRATION: ${REFRESH_EXPIRATION}
+    ports:
+      - "${SERVER_PORT}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/root/uploads
+    networks:
+      - auth_api_network
+
+volumes:
+  mysql_data:
+
+networks:
+  auth_api_network:
+    driver: bridge
