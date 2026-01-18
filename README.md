@@ -529,8 +529,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Jika ada pertanyaan atau issue:
 - Create GitHub issue
-- Email: support@example.com
-- Discord: [Join Server](https://discord.gg/yourserver)
+- Email: gagaltotal666@gtrtech666.my.id
 
 ---
 
