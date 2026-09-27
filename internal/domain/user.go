@@ -7,14 +7,19 @@ import (
 )
 
 type User struct {
-	ID        uint           `gorm:"primaryKey" json:"id"`
-	Name      string         `gorm:"size:100;not null" json:"name"`
-	Email     string         `gorm:"size:100;uniqueIndex;not null" json:"email"`
-	Password  string         `gorm:"size:255;not null" json:"-"`
-	Role      string         `gorm:"size:20;default:user" json:"role"` // cek role admin, user
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	ID                          uint           `gorm:"primaryKey" json:"id"`
+	Name                        string         `gorm:"size:100;not null" json:"name"`
+	Email                       string         `gorm:"size:100;uniqueIndex;not null" json:"email"`
+	Password                    string         `gorm:"size:255;not null" json:"-"`
+	Role                        string         `gorm:"size:20;default:user" json:"role"` // cek role admin, user
+	EmailVerified               bool           `gorm:"default:false" json:"email_verified"`
+	VerificationToken           string         `gorm:"size:255;index" json:"-"`
+	VerificationTokenExpiresAt  *time.Time     `json:"-"`
+	PasswordResetToken          string         `gorm:"size:255;index" json:"-"`
+	PasswordResetTokenExpiresAt *time.Time     `json:"-"`
+	CreatedAt                   time.Time      `json:"created_at"`
+	UpdatedAt                   time.Time      `json:"updated_at"`
+	DeletedAt                   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type RegisterRequest struct {
@@ -46,4 +51,21 @@ type AuthResponse struct {
 
 type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+type VerifyEmailRequest struct {
+	Token string `json:"token" binding:"required"`
+}
+
+type ResendVerificationRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type ResetPasswordRequest struct {
+	Token       string `json:"token" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required,min=6"`
 }

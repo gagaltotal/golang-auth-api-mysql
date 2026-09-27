@@ -18,6 +18,11 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
+// FindByPasswordResetToken implements [repository.UserRepository].
+func (m *MockUserRepository) FindByPasswordResetToken(token string) (*domain.User, error) {
+	panic("unimplemented")
+}
+
 func (m *MockUserRepository) Create(user *domain.User) error {
 	args := m.Called(user)
 	return args.Error(0)
@@ -52,6 +57,14 @@ func (m *MockUserRepository) Delete(id uint) error {
 func (m *MockUserRepository) FindAll(page, limit int) ([]domain.User, int64, error) {
 	args := m.Called(page, limit)
 	return args.Get(0).([]domain.User), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockUserRepository) FindByVerificationToken(token string) (*domain.User, error) {
+	args := m.Called(token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
 }
 
 // Mock RefreshTokenRepository

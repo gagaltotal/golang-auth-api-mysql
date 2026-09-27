@@ -30,6 +30,11 @@ func SetupRoutes(router gin.IRouter, db *gorm.DB, cfg *config.Config) {
 	// Apply global middleware
 	router.Use(middleware.RateLimit())
 
+	//index route
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "Welcome to API lur!"})
+	})
+
 	// API v1 routes
 	v1 := router.Group("/api/v1")
 	{
@@ -40,6 +45,10 @@ func SetupRoutes(router gin.IRouter, db *gorm.DB, cfg *config.Config) {
 			auth.POST("/login", h.Login)
 			auth.POST("/refresh", h.RefreshToken)
 			auth.POST("/logout", h.Logout)
+			auth.GET("/verify-email", h.VerifyEmail)
+			auth.POST("/resend-verification", h.ResendVerification)
+			auth.POST("/forgot-password", h.ForgotPassword)
+			auth.POST("/reset-password", h.ResetPassword)
 		}
 
 		// Public product routes

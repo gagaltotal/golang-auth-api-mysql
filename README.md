@@ -544,8 +544,8 @@ Jika ada pertanyaan atau issue:
 - [x] Unit tests
 - [x] Swagger documentation
 - [x] Docker support
-- [ ] Email verification
-- [ ] Forgot password
+- [x] Email verification
+- [x] Forgot password
 - [ ] 2FA authentication
 - [ ] WebSocket support
 - [ ] GraphQL API

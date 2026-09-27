@@ -7,6 +7,7 @@ import (
 	"golang-auth-api-mysql/internal/repository"
 	"golang-auth-api-mysql/pkg/hash"
 	"golang-auth-api-mysql/pkg/jwt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -101,6 +102,122 @@ func (s *authServiceImpl) RefreshToken(req domain.RefreshRequest) (*domain.AuthR
 
 func (s *authServiceImpl) Logout(refreshToken string) error {
 	return s.refreshTokenRepo.RevokeByToken(refreshToken)
+}
+
+func (s *authServiceImpl) VerifyEmail(token string) error {
+	// Find user by verification token
+	user, err := s.userRepo.FindByVerificationToken(token)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("invalid or expired verification token")
+		}
+		return err
+	}
+
+	// Mark email as verified
+	user.EmailVerified = true
+	user.VerificationToken = ""
+	user.VerificationTokenExpiresAt = nil
+
+	// Update user
+	if err := s.userRepo.Update(user); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *authServiceImpl) ResendVerification(email string) error {
+	// Find user by email
+	user, err := s.userRepo.FindByEmail(email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	// Check if email already verified
+	if user.EmailVerified {
+		return errors.New("email already verified")
+	}
+
+	// Generate new verification token
+	newToken := uuid.New().String()
+	expiresAt := time.Now().Add(24 * time.Hour) // 24 hours expiry
+
+	// Update user with new verification token
+	user.VerificationToken = newToken
+	user.VerificationTokenExpiresAt = &expiresAt
+
+	if err := s.userRepo.Update(user); err != nil {
+		return err
+	}
+
+	// TODO: Send verification email (for now, just log)
+	verificationURL := s.cfg.AppBaseURL + "/api/v1/auth/verify-email?token=" + newToken
+	log.Printf("Verification email sent to %s. URL: %s", email, verificationURL)
+
+	return nil
+}
+
+func (s *authServiceImpl) ForgotPassword(email string) error {
+	// Find user by email
+	user, err := s.userRepo.FindByEmail(email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	// Generate new password reset token
+	newToken := uuid.New().String()
+	expiresAt := time.Now().Add(24 * time.Hour) // 24 hours expiry
+
+	// Update user with new password reset token
+	user.PasswordResetToken = newToken
+	user.PasswordResetTokenExpiresAt = &expiresAt
+
+	if err := s.userRepo.Update(user); err != nil {
+		return err
+	}
+
+	// TODO: Send reset email (for now, just log)
+	resetURL := s.cfg.AppBaseURL + "/api/v1/auth/reset-password?token=" + newToken
+	log.Printf("Password reset email sent to %s. URL: %s", email, resetURL)
+
+	return nil
+}
+
+func (s *authServiceImpl) ResetPassword(req domain.ResetPasswordRequest) error {
+	// Find user by reset token
+	user, err := s.userRepo.FindByPasswordResetToken(req.Token)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("invalid or expired reset token")
+		}
+		return err
+	}
+
+	// Hash new password
+	hashedPassword, err := hash.HashPassword(req.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	// Update user password
+	user.Password = hashedPassword
+	// Clear reset token fields
+	user.PasswordResetToken = ""
+	user.PasswordResetTokenExpiresAt = nil
+
+	// Update user
+	if err := s.userRepo.Update(user); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *authServiceImpl) generateAuthResponse(user *domain.User) (*domain.AuthResponse, error) {

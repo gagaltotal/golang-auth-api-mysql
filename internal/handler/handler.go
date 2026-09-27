@@ -455,3 +455,111 @@ func (h *Handler) GetAuditLogs(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": response})
 }
+
+// VerifyEmail godoc
+// @Summary Verify email address
+// @Description Verify user email address using verification token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param token query string true "Verification token"
+// @Success 200 {object} map[string]string "message: Email verified successfully"
+// @Failure 400 {object} map[string]string "error: Bad Request"
+// @Failure 404 {object} map[string]string "error: Not Found"
+// @Router /auth/verify-email [get]
+func (h *Handler) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Verification token is required"})
+		return
+	}
+
+	err := h.authService.VerifyEmail(token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Email verified successfully"})
+}
+
+// ResendVerification godoc
+// @Summary Resend verification email
+// @Description Resend email verification link to user
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body domain.ResendVerificationRequest true "Resend Verification Request"
+// @Success 200 {object} map[string]string "message: Verification email sent"
+// @Failure 400 {object} map[string]string "error: Bad Request"
+// @Failure 404 {object} map[string]string "error: Not Found"
+// @Router /auth/resend-verification [post]
+func (h *Handler) ResendVerification(c *gin.Context) {
+	var req domain.ResendVerificationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.authService.ResendVerification(req.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Verification email sent"})
+}
+
+// ForgotPassword godoc
+// @Summary Request password reset
+// @Description Send password reset link to user's email
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body domain.ForgotPasswordRequest true "Forgot Password Request"
+// @Success 200 {object} map[string]string "message: Password reset email sent"
+// @Failure 400 {object} map[string]string "error: Bad Request"
+// @Failure 404 {object} map[string]string "error: Not Found"
+// @Router /auth/forgot-password [post]
+func (h *Handler) ForgotPassword(c *gin.Context) {
+	var req domain.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.authService.ForgotPassword(req.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset email sent"})
+}
+
+// ResetPassword godoc
+// @Summary Reset password
+// @Description Reset user password using reset token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body domain.ResetPasswordRequest true "Reset Password Request"
+// @Success 200 {object} map[string]string "message: Password reset successfully"
+// @Failure 400 {object} map[string]string "error: Bad Request"
+// @Failure 404 {object} map[string]string "error: Not Found"
+// @Router /auth/reset-password [post]
+func (h *Handler) ResetPassword(c *gin.Context) {
+	var req domain.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.authService.ResetPassword(req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset successfully"})
+}

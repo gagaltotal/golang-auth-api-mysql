@@ -7,4 +7,8 @@ type AuthService interface {
 	Login(req domain.LoginRequest) (*domain.AuthResponse, error)
 	RefreshToken(req domain.RefreshRequest) (*domain.AuthResponse, error)
 	Logout(refreshToken string) error
+	VerifyEmail(token string) error
+	ResendVerification(email string) error
+	ForgotPassword(email string) error
+	ResetPassword(req domain.ResetPasswordRequest) error
 }

@@ -1,733 +1,883 @@
-openapi: 3.0.3
+basePath: /api/v1
+definitions:
+  golang-auth-api-mysql_internal_domain.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 6
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  golang-auth-api-mysql_internal_domain.CreateProductRequest:
+    properties:
+      description:
+        type: string
+      name:
+        minLength: 3
+        type: string
+      price:
+        type: number
+      stock:
+        minimum: 0
+        type: integer
+    required:
+    - name
+    - price
+    - stock
+    type: object
+  golang-auth-api-mysql_internal_domain.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  golang-auth-api-mysql_internal_domain.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  golang-auth-api-mysql_internal_domain.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  golang-auth-api-mysql_internal_domain.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 3
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  golang-auth-api-mysql_internal_domain.ResendVerificationRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  golang-auth-api-mysql_internal_domain.ResetPasswordRequest:
+    properties:
+      new_password:
+        minLength: 6
+        type: string
+      token:
+        type: string
+    required:
+    - new_password
+    - token
+    type: object
+  golang-auth-api-mysql_internal_domain.UpdateProductRequest:
+    properties:
+      description:
+        type: string
+      name:
+        minLength: 3
+        type: string
+      price:
+        type: number
+      stock:
+        minimum: 0
+        type: integer
+    type: object
+  golang-auth-api-mysql_internal_domain.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 3
+        type: string
+    type: object
+host: localhost:8080
 info:
-  title: Golang Auth API
-  description: Complete REST API with JWT authentication, role-based access control, audit logging, and product management
-  version: 1.0.0
   contact:
-    name: API Support
     email: support@example.com
-
-servers:
-  - url: http://localhost:8080/api/v1
-    description: Development server
-  - url: https://api.example.com/api/v1
-    description: Production server
-
-tags:
-  - name: Auth
-    description: Authentication endpoints
-  - name: Users
-    description: User management endpoints
-  - name: Products
-    description: Product management endpoints
-  - name: Audit
-    description: Audit log endpoints
-
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-  schemas:
-    User:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: John Doe
-        email:
-          type: string
-          example: john@example.com
-        role:
-          type: string
-          enum: [admin, user]
-          example: user
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    Product:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: Product Name
-        description:
-          type: string
-          example: Product description
-        price:
-          type: number
-          format: float
-          example: 10000
-        stock:
-          type: integer
-          example: 100
-        image_url:
-          type: string
-          example: /uploads/abc123.jpg
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    AuditLog:
-      type: object
-      properties:
-        id:
-          type: integer
-        user_id:
-          type: integer
-        action:
-          type: string
-        resource:
-          type: string
-        method:
-          type: string
-        path:
-          type: string
-        ip_address:
-          type: string
-        user_agent:
-          type: string
-        payload:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-          example: Error message
-
+    name: API Support
+  description: Complete REST API with JWT authentication, role-based access control,
+    audit logging, and product management
+  title: Golang Auth API
+  version: "1.0"
 paths:
-  /auth/register:
-    post:
-      tags:
-        - Auth
-      summary: Register new user
-      description: Create a new user account
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-                - email
-                - password
-              properties:
-                name:
-                  type: string
-                  minLength: 3
-                  example: John Doe
-                email:
-                  type: string
-                  format: email
-                  example: john@example.com
-                password:
-                  type: string
-                  minLength: 6
-                  example: password123
-      responses:
-        '201':
-          description: User registered successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      access_token:
-                        type: string
-                      refresh_token:
-                        type: string
-                      user:
-                        $ref: '#/components/schemas/User'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/login:
-    post:
-      tags:
-        - Auth
-      summary: Login user
-      description: Authenticate user and get tokens
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - email
-                - password
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: john@example.com
-                password:
-                  type: string
-                  example: password123
-      responses:
-        '200':
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      access_token:
-                        type: string
-                      refresh_token:
-                        type: string
-                      user:
-                        $ref: '#/components/schemas/User'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/refresh:
-    post:
-      tags:
-        - Auth
-      summary: Refresh access token
-      description: Get new access token using refresh token
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - refresh_token
-              properties:
-                refresh_token:
-                  type: string
-                  example: refresh-token-here
-      responses:
-        '200':
-          description: Token refreshed successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      access_token:
-                        type: string
-                      refresh_token:
-                        type: string
-                      user:
-                        $ref: '#/components/schemas/User'
-        '401':
-          description: Invalid refresh token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/logout:
-    post:
-      tags:
-        - Auth
-      summary: Logout user
-      description: Revoke refresh token
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - refresh_token
-              properties:
-                refresh_token:
-                  type: string
-                  example: refresh-token-here
-      responses:
-        '200':
-          description: Logout successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: logged out successfully
-
-  /users/me:
-    get:
-      tags:
-        - Users
-      summary: Get current user profile
-      description: Get authenticated user's profile
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: Profile retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/User'
-        '401':
-          description: Unauthorized
-
-    put:
-      tags:
-        - Users
-      summary: Update current user profile
-      description: Update authenticated user's profile
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  minLength: 3
-                  example: John Updated
-                email:
-                  type: string
-                  format: email
-                  example: john.new@example.com
-      responses:
-        '200':
-          description: Profile updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/User'
-
-  /users/me/password:
-    put:
-      tags:
-        - Users
-      summary: Change password
-      description: Change authenticated user's password
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - old_password
-                - new_password
-              properties:
-                old_password:
-                  type: string
-                  example: oldpassword123
-                new_password:
-                  type: string
-                  minLength: 6
-                  example: newpassword123
-      responses:
-        '200':
-          description: Password changed successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: password changed successfully
-
-  /users:
-    get:
-      tags:
-        - Users
-      summary: Get all users (Admin only)
-      description: Get paginated list of all users
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 10
-      responses:
-        '200':
-          description: Users retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/User'
-                  page:
-                    type: integer
-                  limit:
-                    type: integer
-                  total_items:
-                    type: integer
-        '403':
-          description: Forbidden - Admin only
-
-  /users/{id}:
-    delete:
-      tags:
-        - Users
-      summary: Delete user (Admin only)
-      description: Delete user by ID
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: User deleted successfully
-        '403':
-          description: Forbidden - Admin only
-        '404':
-          description: User not found
-
-  /products:
-    get:
-      tags:
-        - Products
-      summary: Get all products (Public)
-      description: Get paginated and filtered list of products
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 10
-        - in: query
-          name: search
-          schema:
-            type: string
-        - in: query
-          name: min_price
-          schema:
-            type: number
-        - in: query
-          name: max_price
-          schema:
-            type: number
-      responses:
-        '200':
-          description: Products retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Product'
-                      page:
-                        type: integer
-                      limit:
-                        type: integer
-                      total_items:
-                        type: integer
-                      total_pages:
-                        type: integer
-
-    post:
-      tags:
-        - Products
-      summary: Create product (Admin only)
-      description: Create a new product
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-                - price
-                - stock
-              properties:
-                name:
-                  type: string
-                  minLength: 3
-                  example: New Product
-                description:
-                  type: string
-                  example: Product description
-                price:
-                  type: number
-                  minimum: 0
-                  example: 15000
-                stock:
-                  type: integer
-                  minimum: 0
-                  example: 50
-      responses:
-        '201':
-          description: Product created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Product'
-        '403':
-          description: Forbidden - Admin only
-
-  /products/{id}:
-    get:
-      tags:
-        - Products
-      summary: Get product by ID (Public)
-      description: Get single product details
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Product retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Product'
-        '404':
-          description: Product not found
-
-    put:
-      tags:
-        - Products
-      summary: Update product (Admin only)
-      description: Update existing product
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  minLength: 3
-                description:
-                  type: string
-                price:
-                  type: number
-                  minimum: 0
-                stock:
-                  type: integer
-                  minimum: 0
-      responses:
-        '200':
-          description: Product updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Product'
-        '403':
-          description: Forbidden - Admin only
-        '404':
-          description: Product not found
-
-    delete:
-      tags:
-        - Products
-      summary: Delete product (Admin only)
-      description: Delete product by ID
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Product deleted successfully
-        '403':
-          description: Forbidden - Admin only
-        '404':
-          description: Product not found
-
-  /products/{id}/image:
-    post:
-      tags:
-        - Products
-      summary: Upload product image (Admin only)
-      description: Upload image for product
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - image
-              properties:
-                image:
-                  type: string
-                  format: binary
-      responses:
-        '200':
-          description: Image uploaded successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    $ref: '#/components/schemas/Product'
-        '403':
-          description: Forbidden - Admin only
-        '404':
-          description: Product not found
-
   /audit-logs:
     get:
-      tags:
-        - Audit
-      summary: Get audit logs (Admin only)
+      consumes:
+      - application/json
       description: Get paginated and filtered audit logs
-      security:
-        - BearerAuth: []
       parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 20
-        - in: query
-          name: user_id
-          schema:
-            type: integer
-        - in: query
-          name: action
-          schema:
-            type: string
-        - in: query
-          name: resource
-          schema:
-            type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by user ID
+        in: query
+        name: user_id
+        type: integer
+      - description: Filter by action
+        in: query
+        name: action
+        type: string
+      - description: Filter by resource
+        in: query
+        name: resource
+        type: string
+      produces:
+      - application/json
       responses:
-        '200':
-          description: Audit logs retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/AuditLog'
-                      page:
-                        type: integer
-                      limit:
-                        type: integer
-                      total_items:
-                        type: integer
-                      total_pages:
-                        type: integer
-        '403':
-          description: Forbidden - Admin only
+        "200":
+          description: 'data: AuditListResponse'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 'error: Forbidden'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get audit logs (Admin only)
+      tags:
+      - Audit
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Send password reset link to user's email
+      parameters:
+      - description: Forgot Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Password reset email sent'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error: Not Found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Request password reset
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and get tokens
+      parameters:
+      - description: Login Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: AuthResponse'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login user
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revoke refresh token
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: logged out successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Logout user
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get new access token using refresh token
+      parameters:
+      - description: Refresh Token Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: AuthResponse'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 'error: Invalid refresh token'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh access token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'data: AuthResponse'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register new user
+      tags:
+      - Auth
+  /auth/resend-verification:
+    post:
+      consumes:
+      - application/json
+      description: Resend email verification link to user
+      parameters:
+      - description: Resend Verification Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.ResendVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Verification email sent'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error: Not Found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Resend verification email
+      tags:
+      - Auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset user password using reset token
+      parameters:
+      - description: Reset Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Password reset successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error: Not Found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset password
+      tags:
+      - Auth
+  /auth/verify-email:
+    get:
+      consumes:
+      - application/json
+      description: Verify user email address using verification token
+      parameters:
+      - description: Verification token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Email verified successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error: Not Found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify email address
+      tags:
+      - Auth
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated and filtered list of products
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Minimum price
+        in: query
+        name: min_price
+        type: number
+      - description: Maximum price
+        in: query
+        name: max_price
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: ProductListResponse'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get all products
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Create a new product
+      parameters:
+      - description: Create Product Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'data: Product'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 'error: Forbidden'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create product (Admin only)
+      tags:
+      - Products
+  /products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: product deleted successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 'error: Forbidden'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete product (Admin only)
+      tags:
+      - Products
+    get:
+      consumes:
+      - application/json
+      description: Get single product details
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: Product'
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 'error: Product not found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get product by ID
+      tags:
+      - Products
+    put:
+      consumes:
+      - application/json
+      description: Update existing product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update Product Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: Product'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 'error: Forbidden'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error: Product not found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update product (Admin only)
+      tags:
+      - Products
+  /products/{id}/image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload image for product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Image file (jpeg, png, gif, webp, max 5MB)
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message, data: Product'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 'error: Forbidden'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error: Product not found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload product image (Admin only)
+      tags:
+      - Products
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated list of all users
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data, page, limit, total_items
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 'error: Forbidden'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all users (Admin only)
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: user deleted successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 'error: Forbidden'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete user (Admin only)
+      tags:
+      - Users
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: User'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error: User not found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update authenticated user's profile
+      parameters:
+      - description: Update User Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'data: User'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update current user profile
+      tags:
+      - Users
+  /users/me/password:
+    put:
+      consumes:
+      - application/json
+      description: Change authenticated user's password
+      parameters:
+      - description: Change Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/golang-auth-api-mysql_internal_domain.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: password changed successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Bad Request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'error: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change password
+      tags:
+      - Users
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

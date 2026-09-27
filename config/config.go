@@ -20,6 +20,7 @@ type Config struct {
 	RefreshExpiration string
 	UploadPath        string
 	MaxUploadSize     int64
+	AppBaseURL        string
 }
 
 func LoadConfig() *Config {
@@ -40,6 +41,7 @@ func LoadConfig() *Config {
 		RefreshExpiration: getEnv("REFRESH_EXPIRATION", "7d"),
 		UploadPath:        getEnv("UPLOAD_PATH", "./uploads"),
 		MaxUploadSize:     5 * 1024 * 1024,
+		AppBaseURL:        getEnv("APP_BASE_URL", "http://localhost:8080"),
 	}
 }
 

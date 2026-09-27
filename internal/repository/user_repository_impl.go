@@ -57,3 +57,21 @@ func (r *userRepositoryImpl) FindAll(page, limit int) ([]domain.User, int64, err
 	err := r.db.Offset(offset).Limit(limit).Find(&users).Error
 	return users, total, err
 }
+
+func (r *userRepositoryImpl) FindByVerificationToken(token string) (*domain.User, error) {
+	var user domain.User
+	err := r.db.Where("verification_token = ? AND verification_token_expires_at > NOW()", token).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *userRepositoryImpl) FindByPasswordResetToken(token string) (*domain.User, error) {
+	var user domain.User
+	err := r.db.Where("password_reset_token = ? AND password_reset_token_expires_at > NOW()", token).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
